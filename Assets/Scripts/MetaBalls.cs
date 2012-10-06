@@ -7,7 +7,7 @@ public class MetaBalls
 
 	public List<MetaPoint> metaPoints;
 	public float isoValue;
-	public bool isInitialized = false;
+	public bool isInitialized;
 
 	public void Initialize()
 	{
@@ -32,20 +32,6 @@ public class MetaBalls
 	public void MoveBall(int idx, Vector3 delta)
 	{
 		metaPoints[idx].pos = metaPoints[idx].pos + delta;
-	}
-
-	public Vertex Interpolate(Vertex a, Vertex b)
-	{
-		float diff = (isoValue - a.flux)/(b.flux - a.flux);
-
-		return new Vertex
-			       {
-				       pos = a.pos + (b.pos - a.pos)*diff,
-					   flux = a.flux + (b.flux - a.flux) * diff,
-				       normal = a.normal + (b.normal - a.normal)*diff,
-					   uv = a.uv + (b.uv-a.uv) * diff,
-					   tangent = a.tangent+(b.tangent-a.tangent)*diff
-			       };
 	}
 
 	public float GetVertexValue(Vertex v)

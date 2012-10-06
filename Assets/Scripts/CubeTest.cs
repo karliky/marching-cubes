@@ -9,7 +9,7 @@ using UnityEngine;
 public class CubeTest : MonoBehaviour
 {
 	public MarchingCubes cubes = new MarchingCubes(new Vector3(-10.5f, -10.5f, -10.5f), new Vector3(10.5f, 10.5f, 10.5f),
-	                                               new Vector3(40, 40, 40), 0.2f);
+	                                               new Vector3(30, 30, 30), 0.2f);
 
 
 	public float movement;
@@ -30,8 +30,10 @@ public class CubeTest : MonoBehaviour
 		if (Application.isPlaying)
 		{
 			movement += Time.deltaTime;
-			cubes.metaBalls.MoveBall(0, new Vector3(Mathf.Cos(movement), Mathf.Sin(movement), Mathf.Cos(movement*2))*0.1f);
-			cubes.metaBalls.MoveBall(1, new Vector3(Mathf.Sin(movement), Mathf.Cos(movement), Mathf.Sin(movement*2))*0.1f);
+			if(cubes.metaBalls.metaPoints.Count>0)
+				cubes.metaBalls.MoveBall(0, new Vector3(Mathf.Cos(movement), Mathf.Sin(movement), Mathf.Cos(movement * 2)) * 0.1f);
+			if (cubes.metaBalls.metaPoints.Count > 1)
+				cubes.metaBalls.MoveBall(1, new Vector3(Mathf.Sin(movement), Mathf.Cos(movement), Mathf.Sin(movement*2))*0.1f);
 
 			ReDraw();
 		}
@@ -70,7 +72,7 @@ public class CubeTest : MonoBehaviour
 				//int index = 0;
 
 				const int maxCount = 60000;
-				if(curIndex<vertices.Count)
+				if(curIndex<=vertices.Count)
 				//EditorApplication.delayCall += () =>
 				{
 				    GameObject nextChild = gameObject;// new GameObject("mesh " + index);

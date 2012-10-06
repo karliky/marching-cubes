@@ -365,113 +365,113 @@ public class MarchingCubes {
 		}
 		metaBalls.isoValue = iso;
 
-		//    int x = Random.Range(1, size.x - 1);
-		//    int y = Random.Range(1, size.y - 1);
-		//    int z = Random.Range(1, size.z - 1);
-		//    Vertex v = vertices[x, y, z];
-
-		//    v.flux += Random.Range(0, 0.10f);
-
-		//    v.inside = v.flux > iso;
-
-
-		//    v.normal.x = vertices[x - 1, y, z].flux - vertices[x + 1, y, z].flux;
-		//        //(metaBalls.GetVertexValue(vertices[x - 1, y, z]) - metaBalls.GetVertexValue(vertices[x + 1, y, z]));
-		//    v.normal.y = vertices[x, y - 1, z].flux - vertices[x, y + 1, z].flux;
-		//        //(metaBalls.GetVertexValue(vertices[x, y - 1, z]) - metaBalls.GetVertexValue(vertices[x, y + 1, z]));
-		//    v.normal.z = vertices[x, y, z - 1].flux - vertices[x, y, z + 1].flux;
-		//        //(metaBalls.GetVertexValue(vertices[x, y, z - 1]) - metaBalls.GetVertexValue(vertices[x, y, z + 1]));
-
-		//    v.normal.Normalize();
-
-		//    Vector3 tangent = new Vector3(
-		//        (vertices[x - 1, y, z].pos - vertices[x + 1, y, z].pos).x,
-		//        (vertices[x, y - 1, z].pos - vertices[x, y + 1, z].pos).y,
-		//        (vertices[x, y, z - 1].pos - vertices[x, y, z + 1].pos).z).normalized;
-
-		//    v.uv.x = Vector3.Dot(v.pos, tangent);
-		//    v.uv.y = Vector3.Dot(v.pos, Vector3.Cross(tangent, v.normal));
-
-		//    v.tangent = Vector3.Cross(tangent, v.normal).normalized;
-
-		//    vertices[x, y, z] = v;
-		//}
-		{
-			for (int z = 0; z < size.z; z++) {
-				for (int y = 0; y < size.y; y++) {
-					for (int x = 0; x < size.x; x++) {
-						Vertex v = vertices[x, y, z];
-						v.flux = metaBalls.GetVertexValue(v);
-						v.inside = v.flux > metaBalls.isoValue;
-						if (capped&&(z == 0 || x == 0 || y == 0||x==size.x-1||y==size.y-1||z==size.z-1))
+		for (int z = 0; z < size.z; z++) {
+			for (int y = 0; y < size.y; y++) {
+				for (int x = 0; x < size.x; x++) {
+					Vertex v = vertices[x, y, z];
+					v.flux = metaBalls.GetVertexValue(v);
+					//v.flux = Random.Range(-1.0f, 1.0f);
+					if (capped && (z == 0 || x == 0 || y == 0 || x == size.x - 1 || y == size.y - 1 || z == size.z - 1))
+					{
+						v.flux = 0;
+						if (z == 0)
 						{
-							v.flux = 0;
-							v.inside = false;
+							//float a = metaBalls.GetVertexValue(vertices[x, y, 2]);
+							//float b = metaBalls.GetVertexValue(vertices[x, y, 1]);
+							//v.flux = a;
 						}
-
-						vertices[x, y, z] = v;
+						//v.inside = false;
 					}
-				}
-			}
-			for (int z = 0; z < size.z; z++) {
-				for (int y = 0; y < size.y; y++) {
-					for (int x = 0; x < size.x; x++) {
-						Vertex v = vertices[x, y, z];
-						Vector3 tangent;
+					v.inside = v.flux > iso;
 
-						const float multiplier = 2;
-						if (x == 0) {
-							v.normal.x = (v.flux - vertices[x + 1, y, z].flux) * multiplier;
-							tangent.x = (v.pos - vertices[x + 1, y, z].pos).x * multiplier;
-						}
-						else if (x == size.x - 1) {
-							v.normal.x = (vertices[x - 1, y, z].flux - v.flux) * multiplier;
-							tangent.x = (vertices[x - 1, y, z].pos - v.pos).x * multiplier;
-						}
-						else {
-							v.normal.x = vertices[x - 1, y, z].flux - vertices[x + 1, y, z].flux;
-							tangent.x = (vertices[x - 1, y, z].pos - vertices[x + 1, y, z].pos).x;
-						}
-
-						if (y == 0) {
-							v.normal.y = -vertices[x, y + 1, z].flux;
-							tangent.y = (v.pos - vertices[x, y + 1, z].pos).y * multiplier;
-						}
-						else if (y == size.y - 1) {
-							v.normal.y = vertices[x, y - 1, z].flux;
-							tangent.y = (vertices[x, y - 1, z].pos - v.pos).y * multiplier;
-						}
-						else {
-							v.normal.y = vertices[x, y - 1, z].flux - vertices[x, y + 1, z].flux;
-							tangent.y = (vertices[x, y - 1, z].pos - vertices[x, y + 1, z].pos).y;
-						}
-
-						if (z == 0) {
-							v.normal.z = -vertices[x, y, z + 1].flux;
-							tangent.z = (v.pos - vertices[x, y, z + 1].pos).z * multiplier;
-						}
-						else if (z == size.z - 1) {
-							v.normal.z = vertices[x, y, z - 1].flux;
-							tangent.z = (vertices[x, y, z - 1].pos - v.pos).z * multiplier;
-						}
-						else {
-							v.normal.z = vertices[x, y, z - 1].flux - vertices[x, y, z + 1].flux;
-							tangent.z = (vertices[x, y, z - 1].pos - vertices[x, y, z + 1].pos).z;
-						}
-
-						v.normal.Normalize();
-						tangent.Normalize();
-						v.tangent = Vector3.Cross(tangent, v.normal);
-
-						//http://en.wikipedia.org/wiki/UV_mapping#Finding_UV_on_a_sphere
-						v.uv.x = 0.5f - Mathf.Atan2(-v.normal.z, -v.normal.x) / (Mathf.PI * 2);
-						v.uv.y = 0.5f - 2.0f * (Mathf.Asin(-v.normal.y) / (Mathf.PI * 2));
-
-						vertices[x, y, z] = v;
-					}
+					vertices[x, y, z] = v;
 				}
 			}
 		}
+
+		for (int z = 0; z < size.z; z++) {
+			for (int y = 0; y < size.y; y++) {
+				for (int x = 0; x < size.x; x++) {
+					Vertex v = vertices[x, y, z];
+					Vector3 tangent;
+
+					const float multiplier = 2;
+					if (x == 0) 
+					{
+						v.normal.x = (v.flux - vertices[x + 1, y, z].flux) * multiplier;
+						tangent.x = (v.pos - vertices[x + 1, y, z].pos).x * multiplier;
+					}
+					else if (x == size.x - 1) 
+					{
+						v.normal.x = (vertices[x - 1, y, z].flux - v.flux) * multiplier;
+						tangent.x = (vertices[x - 1, y, z].pos - v.pos).x * multiplier;
+					}
+					else 
+					{
+						v.normal.x = vertices[x - 1, y, z].flux - vertices[x + 1, y, z].flux;
+						tangent.x = (vertices[x - 1, y, z].pos - vertices[x + 1, y, z].pos).x;
+					}
+
+					if (y == 0) 
+					{
+						v.normal.y = (v.flux - vertices[x, y + 1, z].flux) * multiplier;
+						tangent.y = (v.pos - vertices[x, y + 1, z].pos).y * multiplier;
+					}
+					else if (y == size.y - 1) 
+					{
+						v.normal.y = (vertices[x, y - 1, z].flux - v.flux) * multiplier;
+						tangent.y = (vertices[x, y - 1, z].pos - v.pos).y * multiplier;
+					}
+					else 
+					{
+						v.normal.y = vertices[x, y - 1, z].flux - vertices[x, y + 1, z].flux;
+						tangent.y = (vertices[x, y - 1, z].pos - vertices[x, y + 1, z].pos).y;
+					}
+
+					if (z == 0) 
+					{
+						v.normal.z = (v.flux - vertices[x, y, z + 1].flux) * multiplier;
+						tangent.z = (v.pos - vertices[x, y, z + 1].pos).z * multiplier;
+					}
+					else if (z == size.z - 1) 
+					{
+						v.normal.z = (vertices[x, y, z - 1].flux - v.flux) * multiplier;
+						tangent.z = (vertices[x, y, z - 1].pos - v.pos).z * multiplier;
+					}
+					else 
+					{
+						v.normal.z = vertices[x, y, z - 1].flux - vertices[x, y, z + 1].flux;
+						tangent.z = (vertices[x, y, z - 1].pos - vertices[x, y, z + 1].pos).z;
+					}
+
+					v.normal.Normalize();
+					tangent.Normalize();
+					v.tangent = Vector3.Cross(tangent, v.normal);
+
+					//http://en.wikipedia.org/wiki/UV_mapping#Finding_UV_on_a_sphere
+					v.uv.x = 0.5f - Mathf.Atan2(-v.normal.z, -v.normal.x) / (Mathf.PI * 2);
+					v.uv.y = 0.5f - 2.0f * (Mathf.Asin(-v.normal.y) / (Mathf.PI * 2));
+
+					vertices[x, y, z] = v;
+				}
+			}
+		}
+	}
+
+
+
+	private Vertex Interpolate(Vertex a, Vertex b)
+	{
+		float diff = (iso - a.flux) / (b.flux - a.flux);
+
+		return new Vertex
+		{
+			pos = a.pos + (b.pos - a.pos) * diff,
+			flux = a.flux + (b.flux - a.flux) * diff,
+			normal = a.normal + (b.normal - a.normal) * diff,
+			uv = a.uv + (b.uv - a.uv) * diff,
+			tangent = a.tangent + (b.tangent - a.tangent) * diff
+		};
 	}
 
 	public void Draw(List<Vector3> verticesOut, List<Vector3> normalsOut, List<Vector2> uvsOut, List<Vector4> tangentsOut) {
@@ -480,7 +480,6 @@ public class MarchingCubes {
 		uvsOut.Clear();
 		tangentsOut.Clear();
 
-		Vertex[] verts = new Vertex[12];
 
 		for (int z = 0; z < size.z - 1; z++) {
 			for (int y = 0; y < size.y - 1; y++) {
@@ -498,87 +497,88 @@ public class MarchingCubes {
 
 					if (lookup != 0 && lookup != 255) {
 						// 0 - 1
+						Vertex[] verts = new Vertex[12];
 						if ((EdgeTable[lookup] & 1) != 0)
 							// x + (y + 1)*,y+1, + (z + 1) * ,y+1, * size_z
 							// (x + 1) + (y + 1)*,y+1, + (z + 1) * ,y+1, * size_z
-							verts[0] = metaBalls.Interpolate(vertices[x, y + 1, z + 1],
+							verts[0] = Interpolate(vertices[x, y + 1, z + 1],
 							                                 vertices[x + 1, y + 1, z + 1]);
 
 						// 1 - 2
 						if ((EdgeTable[lookup] & 2) != 0)
 							// (x + 1) + (y + 1)*,y+1, + (z + 1) * ,y+1, * size_z
 							// (x + 1) + (y + 1)*,y+1, + z * ,y+1, * size_z
-							verts[1] = metaBalls.Interpolate(vertices[x + 1, y + 1, z + 1],
+							verts[1] = Interpolate(vertices[x + 1, y + 1, z + 1],
 							                                 vertices[x + 1, y + 1, z]);
 
 						// 2 - 3
 						if ((EdgeTable[lookup] & 4) != 0)
 							// (x + 1) + (y + 1)*,y+1, + z * ,y+1, * size_z
 							// x + (y + 1)*,y+1, + z * ,y+1, * size_z
-							verts[2] = metaBalls.Interpolate(vertices[x + 1, y + 1, z],
+							verts[2] = Interpolate(vertices[x + 1, y + 1, z],
 							                                 vertices[x, y + 1, z]);
 
 						// 3 - 0
 						if ((EdgeTable[lookup] & 8) != 0)
 							// x + (y + 1)*,y+1, + z * ,y+1, * size_z
 							// x + (y + 1)*,y+1, + (z + 1) * ,y+1, * size_z
-							verts[3] = metaBalls.Interpolate(vertices[x, y + 1, z],
+							verts[3] = Interpolate(vertices[x, y + 1, z],
 							                                 vertices[x, y + 1, z + 1]);
 
 						// 4 - 5
 						if ((EdgeTable[lookup] & 16) != 0)
 							// x + y*,y+1, + (z + 1) * ,y+1, * size_z
 							// (x + 1) + y*,y+1, + (z + 1) * ,y+1, * size_z
-							verts[4] = metaBalls.Interpolate(vertices[x, y, z + 1],
+							verts[4] = Interpolate(vertices[x, y, z + 1],
 							                                 vertices[x + 1, y, z + 1]);
 
 						// 5 - 6
 						if ((EdgeTable[lookup] & 32) != 0)
 							// (x + 1) + y*,y+1, + (z + 1) * ,y+1, * size_z
 							// (x + 1) + y*,y+1, + z * ,y+1, * size_z
-							verts[5] = metaBalls.Interpolate(vertices[x + 1, y, z + 1],
+							verts[5] = Interpolate(vertices[x + 1, y, z + 1],
 							                                 vertices[x + 1, y, z]);
 
 						// 6 - 7
 						if ((EdgeTable[lookup] & 64) != 0)
 							// (x + 1) + y*,y+1, + z * ,y+1, * size_z
 							// x + y*,y+1, + z * ,y+1, * size_z
-							verts[6] = metaBalls.Interpolate(vertices[x + 1, y, z],
+							verts[6] = Interpolate(vertices[x + 1, y, z],
 							                                 vertices[x, y, z]);
 
 						// 7 - 4
 						if ((EdgeTable[lookup] & 128) != 0)
 							// x + y*,y+1, + z * ,y+1, * size_z
 							// x + y*,y+1, + (z + 1) * ,y+1, * size_z
-							verts[7] = metaBalls.Interpolate(vertices[x, y, z],
+							verts[7] = Interpolate(vertices[x, y, z],
 							                                 vertices[x, y, z + 1]);
 
 						// 0 - 4
 						if ((EdgeTable[lookup] & 256) != 0)
 							// x + (y + 1)*,y+1, + (z + 1) * ,y+1, * size_z
 							// x + y*,y+1, + (z + 1) * ,y+1, * size_z
-							verts[8] = metaBalls.Interpolate(vertices[x, y + 1, z + 1],
+							verts[8] = Interpolate(vertices[x, y + 1, z + 1],
 							                                 vertices[x, y, z + 1]);
 
 						// 1 - 5
 						if ((EdgeTable[lookup] & 512) != 0)
 							// (x + 1) + (y + 1)*,y+1, + (z + 1) * ,y+1, * size_z
 							// (x + 1) + y*,y+1, + (z + 1) * ,y+1, * size_z
-							verts[9] = metaBalls.Interpolate(vertices[x + 1, y + 1, z + 1],
+							verts[9] = Interpolate(vertices[x + 1, y + 1, z + 1],
 							                                 vertices[x + 1, y, z + 1]);
 
 						// 2 - 6
 						if ((EdgeTable[lookup] & 1024) != 0)
 							// (x + 1) + (y + 1)*,y+1, + z * ,y+1, * size_z
 							// (x + 1) + y*,y+1, + z * ,y+1, * size_z
-							verts[10] = metaBalls.Interpolate(vertices[x + 1, y + 1, z],
+							verts[10] = Interpolate(vertices[x + 1, y + 1, z],
 							                                  vertices[x + 1, y, z]);
 
 						// 3 - 7
 						if ((EdgeTable[lookup] & 2048) != 0)
 							// x + (y + 1)*,y+1, + z * ,y+1, * size_z
 							// x + y*,y+1, + z * ,y+1, * size_z
-							verts[11] = metaBalls.Interpolate(vertices[x, y + 1, z],
+							verts[11] = Interpolate(vertices[x, y + 1, z],
 							                                  vertices[x, y, z]);
 
 						for (int i = 0; TriTable[lookup, i] != -1; i += 3) {

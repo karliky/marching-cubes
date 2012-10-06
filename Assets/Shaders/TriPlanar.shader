@@ -14,6 +14,7 @@ Shader "Custom/TriPlanar" {
 		CGPROGRAM
 
 		#pragma surface surf Lambert vertex:vert
+		#pragma exclude_renderers flash
 		
 		half4 _XTexture_ST;
 		half4 _YTexture_ST;
