@@ -419,13 +419,14 @@ public class MarchingCubes {
 						Vertex v = vertices[x, y, z];
 						Vector3 tangent;
 
+						const float multiplier = 2;
 						if (x == 0) {
-							v.normal.x = (v.flux - vertices[x + 1, y, z].flux) * 2;
-							tangent.x = -vertices[x + 1, y, z].pos.x;
+							v.normal.x = (v.flux - vertices[x + 1, y, z].flux) * multiplier;
+							tangent.x = (v.pos - vertices[x + 1, y, z].pos).x * multiplier;
 						}
 						else if (x == size.x - 1) {
-							v.normal.x = (vertices[x - 1, y, z].flux - v.flux) * 2;
-							tangent.x = vertices[x - 1, y, z].pos.x;
+							v.normal.x = (vertices[x - 1, y, z].flux - v.flux) * multiplier;
+							tangent.x = (vertices[x - 1, y, z].pos - v.pos).x * multiplier;
 						}
 						else {
 							v.normal.x = vertices[x - 1, y, z].flux - vertices[x + 1, y, z].flux;
@@ -434,11 +435,11 @@ public class MarchingCubes {
 
 						if (y == 0) {
 							v.normal.y = -vertices[x, y + 1, z].flux;
-							tangent.y = -vertices[x, y + 1, z].pos.y;
+							tangent.y = (v.pos - vertices[x, y + 1, z].pos).y * multiplier;
 						}
 						else if (y == size.y - 1) {
 							v.normal.y = vertices[x, y - 1, z].flux;
-							tangent.y = vertices[x, y - 1, z].pos.y;
+							tangent.y = (vertices[x, y - 1, z].pos - v.pos).y * multiplier;
 						}
 						else {
 							v.normal.y = vertices[x, y - 1, z].flux - vertices[x, y + 1, z].flux;
@@ -447,11 +448,11 @@ public class MarchingCubes {
 
 						if (z == 0) {
 							v.normal.z = -vertices[x, y, z + 1].flux;
-							tangent.z = -vertices[x, y, z + 1].pos.z;
+							tangent.z = (v.pos - vertices[x, y, z + 1].pos).z * multiplier;
 						}
 						else if (z == size.z - 1) {
 							v.normal.z = vertices[x, y, z - 1].flux;
-							tangent.z = vertices[x, y, z - 1].pos.z;
+							tangent.z = (vertices[x, y, z - 1].pos - v.pos).z * multiplier;
 						}
 						else {
 							v.normal.z = vertices[x, y, z - 1].flux - vertices[x, y, z + 1].flux;
@@ -459,14 +460,13 @@ public class MarchingCubes {
 						}
 
 						v.normal.Normalize();
-
-
 						tangent.Normalize();
+						v.tangent = Vector3.Cross(tangent, v.normal);
 
-						v.uv.x = Vector3.Dot(v.pos, tangent);
-						v.uv.y = Vector3.Dot(v.pos, Vector3.Cross(tangent, v.normal));
+						//http://en.wikipedia.org/wiki/UV_mapping#Finding_UV_on_a_sphere
+						v.uv.x = 0.5f - Mathf.Atan2(-v.normal.z, -v.normal.x) / (Mathf.PI * 2);
+						v.uv.y = 0.5f - 2.0f * (Mathf.Asin(-v.normal.y) / (Mathf.PI * 2));
 
-						v.tangent = Vector3.Cross(tangent, v.normal).normalized;
 						vertices[x, y, z] = v;
 					}
 				}
