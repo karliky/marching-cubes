@@ -8,17 +8,22 @@ using UnityEngine;
 [RequireComponent(typeof (MeshFilter), typeof (MeshRenderer))]
 public class CubeTest : MonoBehaviour
 {
-	public MarchingCubes cubes = new MarchingCubes(new Vector3(-10.5f, -10.5f, -10.5f), new Vector3(10.5f, 10.5f, 10.5f),
-	                                               new Vector3(30, 30, 30), 0.2f);
-
+	public MarchingCubes cubes; //new MarchingCubes(new Vector3(-10, -10, -10), new Vector3(10, 10, 10),
+	//                  new Vector3(30, 30, 30), 0.2f);
 
 	public float movement;
 	public float iso = 0.2f;
 
 	private void OnEnable()
 	{
-        if(renderer.sharedMaterial==null)
-            renderer.sharedMaterial = new Material(Shader.Find("Custom/TriPlanar"));
+		if (renderer.sharedMaterial == null)
+			renderer.sharedMaterial = new Material(Shader.Find("Custom/TriPlanar"));
+
+		if (cubes == null)
+		{
+			Debug.Log("nullcubes!");
+			cubes = ScriptableObject.CreateInstance<MarchingCubes>();
+		}
 
 		movement = 0;
 
@@ -30,10 +35,10 @@ public class CubeTest : MonoBehaviour
 		if (Application.isPlaying)
 		{
 			movement += Time.deltaTime;
-			if(cubes.metaBalls.metaPoints.Count>0)
+			if (cubes.metaBalls.metaPoints.Count > 0)
 				cubes.metaBalls.MoveBall(0, new Vector3(Mathf.Cos(movement), Mathf.Sin(movement), Mathf.Cos(movement * 2)) * 0.1f);
 			if (cubes.metaBalls.metaPoints.Count > 1)
-				cubes.metaBalls.MoveBall(1, new Vector3(Mathf.Sin(movement), Mathf.Cos(movement), Mathf.Sin(movement*2))*0.1f);
+				cubes.metaBalls.MoveBall(1, new Vector3(Mathf.Sin(movement), Mathf.Cos(movement), Mathf.Sin(movement * 2)) * 0.1f);
 
 			ReDraw();
 		}
@@ -72,32 +77,30 @@ public class CubeTest : MonoBehaviour
 				//int index = 0;
 
 				const int maxCount = 60000;
-				if(curIndex<=vertices.Count)
-				//EditorApplication.delayCall += () =>
+				if (curIndex <= vertices.Count)
+					//EditorApplication.delayCall += () =>
 				{
-				    GameObject nextChild = gameObject;// new GameObject("mesh " + index);
+					GameObject nextChild = gameObject; // new GameObject("mesh " + index);
 
 					int count = Mathf.Min(vertices.Count - curIndex, maxCount);
 
 					int[] indices = new int[count];
 					for (int i = 0; i < count; i++)
-					{
 						indices[i] = i;
-					}
 
-                    if(nextChild.GetComponent<MeshFilter>().sharedMesh)
-                        DestroyImmediate(nextChild.GetComponent<MeshFilter>().sharedMesh);
+					if (nextChild.GetComponent<MeshFilter>().sharedMesh)
+						DestroyImmediate(nextChild.GetComponent<MeshFilter>().sharedMesh);
 
 					nextChild.GetComponent<MeshFilter>().sharedMesh = new Mesh
-						                                        {
-																	vertices = vertices.GetRange(curIndex,count).ToArray(),
-							                                        triangles = indices,
-																	normals = normals.GetRange(curIndex, count).ToArray(),
-																	tangents = tangents.GetRange(curIndex, count).ToArray(),
-																	uv = uvs.GetRange(curIndex, count).ToArray()
-						                                        };
+					                                                  {
+					                                                  	vertices = vertices.GetRange(curIndex, count).ToArray(),
+					                                                  	triangles = indices,
+					                                                  	normals = normals.GetRange(curIndex, count).ToArray(),
+					                                                  	tangents = tangents.GetRange(curIndex, count).ToArray(),
+					                                                  	uv = uvs.GetRange(curIndex, count).ToArray()
+					                                                  };
 
-                    //nextChild.GetComponent<MeshRenderer>().sharedMaterial = renderer.sharedMaterial;
+					//nextChild.GetComponent<MeshRenderer>().sharedMaterial = renderer.sharedMaterial;
 					//nextChild.transform.parent = transform;
 
 					//index++;
