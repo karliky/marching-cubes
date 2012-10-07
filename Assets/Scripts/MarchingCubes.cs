@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 
 [Serializable]
-public class MarchingCubes : ScriptableObject
+public class MarchingCubes : MonoBehaviour
 {
 	#region tables
 
@@ -307,7 +307,13 @@ public class MarchingCubes : ScriptableObject
 
 	public bool capped;
 
-	[SerializeField] private Vertex[,,] vertices;
+	[SerializeField] private int hash;
+	public int Hash
+	{
+		get { return hash; }
+	}
+
+	[SerializeField] private Vertex[] vertices;
 
 	private Vector3 GetPos(int x, int y, int z)
 	{
@@ -349,9 +355,13 @@ public class MarchingCubes : ScriptableObject
 
 			return v;
 		}
-		return vertices[x, y, z];
+		return vertices[GetIndex(x, y, z)];
 	}
 
+	int GetIndex(int x, int y, int z)
+	{
+		return x + y*steps.x + z*(steps.x*steps.y);
+	}
 
 	public float iso = 0.2f;
 
@@ -368,7 +378,7 @@ public class MarchingCubes : ScriptableObject
 		{
 			if (!steps.Same(value))
 			{
-				steps = new IntVector3(Mathf.Max(value.x, 1), Mathf.Max(value.y, 1), Mathf.Max(value.z, 1));
+				steps = new IntVector3(Mathf.Max(value.x, 2), Mathf.Max(value.y, 2), Mathf.Max(value.z, 2));
 				RegenerateGrid();
 			}
 		}
@@ -414,19 +424,21 @@ public class MarchingCubes : ScriptableObject
 	private void RegenerateGrid()
 	{
 		Vector3 step = Vector3.Scale(Size, new Vector3(1.0f / steps.x, 1.0f / steps.y, 1.0f / steps.z));
-		vertices = new Vertex[steps.x,steps.y,steps.z];
+		vertices = new Vertex[steps.x*steps.y*steps.z];
 		for (int z = 0; z < steps.z; z++)
 		{
 			for (int y = 0; y < steps.y; y++)
 			{
 				for (int x = 0; x < steps.x; x++)
 				{
-					Vertex v = vertices[x, y, z];
-					v.pos = min + Vector3.Scale(step, new Vector3(x, y, z));
-					v.flux = 0;
-					v.inside = false;
-					v.normal = Vector3.zero;
-					vertices[x, y, z] = v;
+					Vertex v = new Vertex
+						           {
+							           pos = min + Vector3.Scale(step, new Vector3(x, y, z)),
+							           flux = 0,
+							           inside = false,
+							           normal = Vector3.zero
+						           };
+					vertices[GetIndex(x, y, z)] = v;
 				}
 			}
 		}
@@ -441,9 +453,9 @@ public class MarchingCubes : ScriptableObject
 			{
 				for (int x = 0; x < steps.x; x++)
 				{
-					Vertex v = vertices[x, y, z];
+					Vertex v = vertices[GetIndex(x, y, z)];
 					v.pos = min + Vector3.Scale(step, new Vector3(x, y, z));
-					vertices[x, y, z] = v;
+					vertices[GetIndex(x, y, z)] = v;
 				}
 			}
 		}
@@ -508,7 +520,7 @@ public class MarchingCubes : ScriptableObject
 			{
 				for (int x = 0; x < steps.x; x++)
 				{
-					Vertex v = vertices[x, y, z];
+					Vertex v = vertices[GetIndex(x, y, z)];
 					v.flux = metaBalls.GetVertexValue(v);
 					//v.flux = Random.Range(-1.0f, 1.0f);
 					if (capped && (z == 0 || x == 0 || y == 0 || x == steps.x - 1 || y == steps.y - 1 || z == steps.z - 1))
@@ -524,7 +536,7 @@ public class MarchingCubes : ScriptableObject
 					}
 					v.inside = v.flux > iso;
 
-					vertices[x, y, z] = v;
+					vertices[GetIndex(x, y, z)] = v;
 				}
 			}
 		}
@@ -535,56 +547,56 @@ public class MarchingCubes : ScriptableObject
 			{
 				for (int x = 0; x < steps.x; x++)
 				{
-					Vertex v = vertices[x, y, z];
+					Vertex v = vertices[GetIndex(x, y, z)];
 					Vector3 tangent;
 
 					const float multiplier = 2;
 					if (x == 0)
 					{
-						v.normal.x = (v.flux - vertices[x + 1, y, z].flux) * multiplier;
-						tangent.x = (v.pos - vertices[x + 1, y, z].pos).x * multiplier;
+						v.normal.x = (v.flux - vertices[GetIndex(x + 1, y, z)].flux) * multiplier;
+						tangent.x = (v.pos - vertices[GetIndex(x + 1, y, z)].pos).x * multiplier;
 					}
 					else if (x == steps.x - 1)
 					{
-						v.normal.x = (vertices[x - 1, y, z].flux - v.flux) * multiplier;
-						tangent.x = (vertices[x - 1, y, z].pos - v.pos).x * multiplier;
+						v.normal.x = (vertices[GetIndex(x - 1, y, z)].flux - v.flux) * multiplier;
+						tangent.x = (vertices[GetIndex(x - 1, y, z)].pos - v.pos).x * multiplier;
 					}
 					else
 					{
-						v.normal.x = vertices[x - 1, y, z].flux - vertices[x + 1, y, z].flux;
-						tangent.x = (vertices[x - 1, y, z].pos - vertices[x + 1, y, z].pos).x;
+						v.normal.x = vertices[GetIndex(x - 1, y, z)].flux - vertices[GetIndex(x + 1, y, z)].flux;
+						tangent.x = (vertices[GetIndex(x - 1, y, z)].pos - vertices[GetIndex(x + 1, y, z)].pos).x;
 					}
 
 					if (y == 0)
 					{
-						v.normal.y = (v.flux - vertices[x, y + 1, z].flux) * multiplier;
-						tangent.y = (v.pos - vertices[x, y + 1, z].pos).y * multiplier;
+						v.normal.y = (v.flux - vertices[GetIndex(x, y + 1, z)].flux) * multiplier;
+						tangent.y = (v.pos - vertices[GetIndex(x, y + 1, z)].pos).y * multiplier;
 					}
 					else if (y == steps.y - 1)
 					{
-						v.normal.y = (vertices[x, y - 1, z].flux - v.flux) * multiplier;
-						tangent.y = (vertices[x, y - 1, z].pos - v.pos).y * multiplier;
+						v.normal.y = (vertices[GetIndex(x, y - 1, z)].flux - v.flux) * multiplier;
+						tangent.y = (vertices[GetIndex(x, y - 1, z)].pos - v.pos).y * multiplier;
 					}
 					else
 					{
-						v.normal.y = vertices[x, y - 1, z].flux - vertices[x, y + 1, z].flux;
-						tangent.y = (vertices[x, y - 1, z].pos - vertices[x, y + 1, z].pos).y;
+						v.normal.y = vertices[GetIndex(x, y - 1, z)].flux - vertices[GetIndex(x, y + 1, z)].flux;
+						tangent.y = (vertices[GetIndex(x, y - 1, z)].pos - vertices[GetIndex(x, y + 1, z)].pos).y;
 					}
 
 					if (z == 0)
 					{
-						v.normal.z = (v.flux - vertices[x, y, z + 1].flux) * multiplier;
-						tangent.z = (v.pos - vertices[x, y, z + 1].pos).z * multiplier;
+						v.normal.z = (v.flux - vertices[GetIndex(x, y, z + 1)].flux) * multiplier;
+						tangent.z = (v.pos - vertices[GetIndex(x, y, z + 1)].pos).z * multiplier;
 					}
 					else if (z == steps.z - 1)
 					{
-						v.normal.z = (vertices[x, y, z - 1].flux - v.flux) * multiplier;
-						tangent.z = (vertices[x, y, z - 1].pos - v.pos).z * multiplier;
+						v.normal.z = (vertices[GetIndex(x, y, z - 1)].flux - v.flux) * multiplier;
+						tangent.z = (vertices[GetIndex(x, y, z - 1)].pos - v.pos).z * multiplier;
 					}
 					else
 					{
-						v.normal.z = vertices[x, y, z - 1].flux - vertices[x, y, z + 1].flux;
-						tangent.z = (vertices[x, y, z - 1].pos - vertices[x, y, z + 1].pos).z;
+						v.normal.z = vertices[GetIndex(x, y, z - 1)].flux - vertices[GetIndex(x, y, z + 1)].flux;
+						tangent.z = (vertices[GetIndex(x, y, z - 1)].pos - vertices[GetIndex(x, y, z + 1)].pos).z;
 					}
 
 					v.normal.Normalize();
@@ -595,10 +607,12 @@ public class MarchingCubes : ScriptableObject
 					v.uv.x = 0.5f - Mathf.Atan2(-v.normal.z, -v.normal.x) / (Mathf.PI * 2);
 					v.uv.y = 0.5f - 2.0f * (Mathf.Asin(-v.normal.y) / (Mathf.PI * 2));
 
-					vertices[x, y, z] = v;
+					vertices[GetIndex(x, y, z)] = v;
 				}
 			}
 		}
+
+		hash = UnityEngine.Random.Range(1, int.MaxValue);
 	}
 
 
@@ -618,6 +632,9 @@ public class MarchingCubes : ScriptableObject
 
 	public void Draw(List<Vector3> verticesOut, List<Vector3> normalsOut, List<Vector2> uvsOut, List<Vector4> tangentsOut)
 	{
+		if(vertices==null)
+			RegenerateGrid();
+
 		verticesOut.Clear();
 		normalsOut.Clear();
 		uvsOut.Clear();
@@ -771,7 +788,7 @@ public class MarchingCubes : ScriptableObject
 }
 
 [Serializable]
-public struct Vertex
+public class Vertex
 {
 	public Vector3 pos;
 	public float flux;
@@ -781,11 +798,11 @@ public struct Vertex
 	public Vector4 tangent;
 }
 
-
 [Serializable]
-public struct IntVector3
+public class IntVector3
 {
-	public readonly int x, y, z;
+	[SerializeField]
+	public int x, y, z;
 
 	public IntVector3(int x, int y, int z)
 	{
