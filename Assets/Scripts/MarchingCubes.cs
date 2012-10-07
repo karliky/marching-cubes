@@ -309,6 +309,49 @@ public class MarchingCubes : ScriptableObject
 
 	[SerializeField] private Vertex[,,] vertices;
 
+	private Vector3 GetPos(int x, int y, int z)
+	{
+		return min +
+		       Vector3.Scale(Vector3.Scale(Size, new Vector3(1.0f / steps.x, 1.0f / steps.y, 1.0f / steps.z)),
+		                     new Vector3(x, y, z));
+	}
+
+	private Vertex GetVertex(int x, int y, int z)
+	{
+		if (x < 0 || y < 0 || z < 0 || x >= steps.x || y >= steps.y || z >= steps.z)
+		{
+			Vertex v = new Vertex
+			           {
+			           	pos = GetPos(x, y, z),
+			           };
+			v.flux = metaBalls.GetVertexValue(v);
+			v.inside = v.flux > iso;
+
+
+			Vector3 tangent;
+			tangent.x = (GetPos(x, y - 1, z) - GetPos(x + 1, y, z)).x;
+			tangent.y = (GetPos(x - 1, y, z) - GetPos(x, y + 1, z)).y;
+			tangent.z = (GetPos(x, y, z - 1) - GetPos(x, y, z + 1)).z;
+
+			v.normal.x = metaBalls.GetVertexValue(new Vertex {pos = GetPos(x - 1, y, z)}) -
+			             metaBalls.GetVertexValue(new Vertex {pos = GetPos(x + 1, y, z)});
+			v.normal.y = metaBalls.GetVertexValue(new Vertex {pos = GetPos(x, y - 1, z)}) -
+			             metaBalls.GetVertexValue(new Vertex {pos = GetPos(x, y + 1, z)});
+			v.normal.z = metaBalls.GetVertexValue(new Vertex {pos = GetPos(x, y, z - 1)}) -
+			             metaBalls.GetVertexValue(new Vertex {pos = GetPos(x, y, z + 1)});
+			v.normal.Normalize();
+			tangent.Normalize();
+			v.tangent = Vector3.Cross(tangent, v.normal);
+
+			//http://en.wikipedia.org/wiki/UV_mapping#Finding_UV_on_a_sphere
+			v.uv.x = 0.5f - Mathf.Atan2(-v.normal.z, -v.normal.x) / (Mathf.PI * 2);
+			v.uv.y = 0.5f - 2.0f * (Mathf.Asin(-v.normal.y) / (Mathf.PI * 2));
+
+			return v;
+		}
+		return vertices[x, y, z];
+	}
+
 
 	public float iso = 0.2f;
 
@@ -448,6 +491,9 @@ public class MarchingCubes : ScriptableObject
 
 	public void ComputeMetaBalls()
 	{
+		if (vertices == null)
+			RegenerateGrid();
+
 		if (metaBalls == null)
 		{
 			metaBalls = new MetaBalls();
@@ -578,22 +624,22 @@ public class MarchingCubes : ScriptableObject
 		tangentsOut.Clear();
 
 
-		for (int z = 0; z < steps.z - 1; z++)
+		for (int z = 0; z < steps.z; z++)
 		{
-			for (int y = 0; y < steps.y - 1; y++)
+			for (int y = 0; y < steps.y; y++)
 			{
-				for (int x = 0; x < steps.x - 1; x++)
+				for (int x = 0; x < steps.x; x++)
 				{
 					short lookup = 0;
 
-					if (vertices[x, y, z].inside) lookup |= 128;
-					if (vertices[x + 1, y, z].inside) lookup |= 64;
-					if (vertices[x + 1, y + 1, z].inside) lookup |= 4;
-					if (vertices[x, y + 1, z].inside) lookup |= 8;
-					if (vertices[x, y, z + 1].inside) lookup |= 16;
-					if (vertices[x + 1, y, z + 1].inside) lookup |= 32;
-					if (vertices[x + 1, y + 1, z + 1].inside) lookup |= 2;
-					if (vertices[x, y + 1, z + 1].inside) lookup |= 1;
+					if (GetVertex(x, y, z).inside) lookup |= 128;
+					if (GetVertex(x + 1, y, z).inside) lookup |= 64;
+					if (GetVertex(x + 1, y + 1, z).inside) lookup |= 4;
+					if (GetVertex(x, y + 1, z).inside) lookup |= 8;
+					if (GetVertex(x, y, z + 1).inside) lookup |= 16;
+					if (GetVertex(x + 1, y, z + 1).inside) lookup |= 32;
+					if (GetVertex(x + 1, y + 1, z + 1).inside) lookup |= 2;
+					if (GetVertex(x, y + 1, z + 1).inside) lookup |= 1;
 
 					if (lookup != 0 && lookup != 255)
 					{
@@ -603,8 +649,8 @@ public class MarchingCubes : ScriptableObject
 						{
 							// x + (y + 1)*,y+1, + (z + 1) * ,y+1, * size_z
 							// (x + 1) + (y + 1)*,y+1, + (z + 1) * ,y+1, * size_z
-							verts[0] = Interpolate(vertices[x, y + 1, z + 1],
-							                       vertices[x + 1, y + 1, z + 1]);
+							verts[0] = Interpolate(GetVertex(x, y + 1, z + 1),
+							                       GetVertex(x + 1, y + 1, z + 1));
 						}
 
 						// 1 - 2
@@ -612,8 +658,8 @@ public class MarchingCubes : ScriptableObject
 						{
 							// (x + 1) + (y + 1)*,y+1, + (z + 1) * ,y+1, * size_z
 							// (x + 1) + (y + 1)*,y+1, + z * ,y+1, * size_z
-							verts[1] = Interpolate(vertices[x + 1, y + 1, z + 1],
-							                       vertices[x + 1, y + 1, z]);
+							verts[1] = Interpolate(GetVertex(x + 1, y + 1, z + 1),
+							                       GetVertex(x + 1, y + 1, z));
 						}
 
 						// 2 - 3
@@ -621,8 +667,8 @@ public class MarchingCubes : ScriptableObject
 						{
 							// (x + 1) + (y + 1)*,y+1, + z * ,y+1, * size_z
 							// x + (y + 1)*,y+1, + z * ,y+1, * size_z
-							verts[2] = Interpolate(vertices[x + 1, y + 1, z],
-							                       vertices[x, y + 1, z]);
+							verts[2] = Interpolate(GetVertex(x + 1, y + 1, z),
+							                       GetVertex(x, y + 1, z));
 						}
 
 						// 3 - 0
@@ -630,8 +676,8 @@ public class MarchingCubes : ScriptableObject
 						{
 							// x + (y + 1)*,y+1, + z * ,y+1, * size_z
 							// x + (y + 1)*,y+1, + (z + 1) * ,y+1, * size_z
-							verts[3] = Interpolate(vertices[x, y + 1, z],
-							                       vertices[x, y + 1, z + 1]);
+							verts[3] = Interpolate(GetVertex(x, y + 1, z),
+							                       GetVertex(x, y + 1, z + 1));
 						}
 
 						// 4 - 5
@@ -639,8 +685,8 @@ public class MarchingCubes : ScriptableObject
 						{
 							// x + y*,y+1, + (z + 1) * ,y+1, * size_z
 							// (x + 1) + y*,y+1, + (z + 1) * ,y+1, * size_z
-							verts[4] = Interpolate(vertices[x, y, z + 1],
-							                       vertices[x + 1, y, z + 1]);
+							verts[4] = Interpolate(GetVertex(x, y, z + 1),
+							                       GetVertex(x + 1, y, z + 1));
 						}
 
 						// 5 - 6
@@ -648,8 +694,8 @@ public class MarchingCubes : ScriptableObject
 						{
 							// (x + 1) + y*,y+1, + (z + 1) * ,y+1, * size_z
 							// (x + 1) + y*,y+1, + z * ,y+1, * size_z
-							verts[5] = Interpolate(vertices[x + 1, y, z + 1],
-							                       vertices[x + 1, y, z]);
+							verts[5] = Interpolate(GetVertex(x + 1, y, z + 1),
+							                       GetVertex(x + 1, y, z));
 						}
 
 						// 6 - 7
@@ -657,8 +703,8 @@ public class MarchingCubes : ScriptableObject
 						{
 							// (x + 1) + y*,y+1, + z * ,y+1, * size_z
 							// x + y*,y+1, + z * ,y+1, * size_z
-							verts[6] = Interpolate(vertices[x + 1, y, z],
-							                       vertices[x, y, z]);
+							verts[6] = Interpolate(GetVertex(x + 1, y, z),
+							                       GetVertex(x, y, z));
 						}
 
 						// 7 - 4
@@ -666,8 +712,8 @@ public class MarchingCubes : ScriptableObject
 						{
 							// x + y*,y+1, + z * ,y+1, * size_z
 							// x + y*,y+1, + (z + 1) * ,y+1, * size_z
-							verts[7] = Interpolate(vertices[x, y, z],
-							                       vertices[x, y, z + 1]);
+							verts[7] = Interpolate(GetVertex(x, y, z),
+							                       GetVertex(x, y, z + 1));
 						}
 
 						// 0 - 4
@@ -675,8 +721,8 @@ public class MarchingCubes : ScriptableObject
 						{
 							// x + (y + 1)*,y+1, + (z + 1) * ,y+1, * size_z
 							// x + y*,y+1, + (z + 1) * ,y+1, * size_z
-							verts[8] = Interpolate(vertices[x, y + 1, z + 1],
-							                       vertices[x, y, z + 1]);
+							verts[8] = Interpolate(GetVertex(x, y + 1, z + 1),
+							                       GetVertex(x, y, z + 1));
 						}
 
 						// 1 - 5
@@ -684,8 +730,8 @@ public class MarchingCubes : ScriptableObject
 						{
 							// (x + 1) + (y + 1)*,y+1, + (z + 1) * ,y+1, * size_z
 							// (x + 1) + y*,y+1, + (z + 1) * ,y+1, * size_z
-							verts[9] = Interpolate(vertices[x + 1, y + 1, z + 1],
-							                       vertices[x + 1, y, z + 1]);
+							verts[9] = Interpolate(GetVertex(x + 1, y + 1, z + 1),
+							                       GetVertex(x + 1, y, z + 1));
 						}
 
 						// 2 - 6
@@ -693,8 +739,8 @@ public class MarchingCubes : ScriptableObject
 						{
 							// (x + 1) + (y + 1)*,y+1, + z * ,y+1, * size_z
 							// (x + 1) + y*,y+1, + z * ,y+1, * size_z
-							verts[10] = Interpolate(vertices[x + 1, y + 1, z],
-							                        vertices[x + 1, y, z]);
+							verts[10] = Interpolate(GetVertex(x + 1, y + 1, z),
+							                        GetVertex(x + 1, y, z));
 						}
 
 						// 3 - 7
@@ -702,8 +748,8 @@ public class MarchingCubes : ScriptableObject
 						{
 							// x + (y + 1)*,y+1, + z * ,y+1, * size_z
 							// x + y*,y+1, + z * ,y+1, * size_z
-							verts[11] = Interpolate(vertices[x, y + 1, z],
-							                        vertices[x, y, z]);
+							verts[11] = Interpolate(GetVertex(x, y + 1, z),
+							                        GetVertex(x, y, z));
 						}
 
 						for (int i = 0; TriTable[lookup, i] != -1; i += 3)
