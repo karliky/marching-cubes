@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
 
-public abstract class BaseMarchingCubes : ScriptableObject
+public abstract class BaseMarchingCubes : MonoBehaviour
 {
 	#region tables
 
@@ -304,7 +304,15 @@ public abstract class BaseMarchingCubes : ScriptableObject
 	#endregion
 
 	[SerializeField]
-	protected Vertex[, ,] vertices;
+	private int hash;
+
+
+	public int Hash
+	{
+		get { return hash; }
+		protected set { hash = value; }
+	}
+	[SerializeField] protected Vertex[] vertices;
 
 
 	public float iso = 0.2f;
@@ -324,7 +332,7 @@ public abstract class BaseMarchingCubes : ScriptableObject
 		{
 			if (!steps.Same(value))
 			{
-				steps = new IntVector3(Mathf.Max(value.x, 1), Mathf.Max(value.y, 1), Mathf.Max(value.z, 1));
+				steps = new IntVector3(Mathf.Max(value.x, 2), Mathf.Max(value.y, 2), Mathf.Max(value.z, 2));
 				RegenerateGrid();
 			}
 		}
@@ -361,7 +369,6 @@ public abstract class BaseMarchingCubes : ScriptableObject
 		}
 	}
 
-
 	protected Vector3 GetPos(int x, int y, int z)
 	{
 		return min +
@@ -373,25 +380,27 @@ public abstract class BaseMarchingCubes : ScriptableObject
 	protected void RegenerateGrid()
 	{
 		Vector3 step = Vector3.Scale(Size, new Vector3(1.0f / steps.x, 1.0f / steps.y, 1.0f / steps.z));
-		vertices = new Vertex[steps.x, steps.y, steps.z];
+		vertices = new Vertex[steps.x * steps.y * steps.z];
 		for (int z = 0; z < steps.z; z++)
 		{
 			for (int y = 0; y < steps.y; y++)
 			{
 				for (int x = 0; x < steps.x; x++)
 				{
-					Vertex v = vertices[x, y, z];
-					v.pos = min + Vector3.Scale(step, new Vector3(x, y, z));
-					v.flux = 0;
-					v.inside = false;
-					v.normal = Vector3.zero;
-					vertices[x, y, z] = v;
+					Vertex v = new Vertex
+					{
+						pos = min + Vector3.Scale(step, new Vector3(x, y, z)),
+						flux = 0,
+						inside = false,
+						normal = Vector3.zero
+					};
+					vertices[GetIndex(x, y, z)] = v;
 				}
 			}
 		}
 	}
 
-	protected void FixGridPositions()
+	private void FixGridPositions()
 	{
 		Vector3 step = Vector3.Scale(Size, new Vector3(1.0f / steps.x, 1.0f / steps.y, 1.0f / steps.z));
 		for (int z = 0; z < steps.z; z++)
@@ -400,16 +409,22 @@ public abstract class BaseMarchingCubes : ScriptableObject
 			{
 				for (int x = 0; x < steps.x; x++)
 				{
-					Vertex v = vertices[x, y, z];
+					Vertex v = vertices[GetIndex(x, y, z)];
 					v.pos = min + Vector3.Scale(step, new Vector3(x, y, z));
-					vertices[x, y, z] = v;
+					vertices[GetIndex(x, y, z)] = v;
 				}
 			}
 		}
 	}
 
 
-	protected Vertex Interpolate(Vertex a, Vertex b)
+	protected int GetIndex(int x, int y, int z)
+	{
+		return x + y * steps.x + z * (steps.x * steps.y);
+	}
+
+
+	private Vertex Interpolate(Vertex a, Vertex b)
 	{
 		float diff = (iso - a.flux) / (b.flux - a.flux);
 
@@ -423,13 +438,16 @@ public abstract class BaseMarchingCubes : ScriptableObject
 		};
 	}
 
-
 	public void Draw(List<Vector3> verticesOut, List<Vector3> normalsOut, List<Vector2> uvsOut, List<Vector4> tangentsOut)
 	{
+		if (vertices == null)
+			RegenerateGrid();
+
 		verticesOut.Clear();
 		normalsOut.Clear();
 		uvsOut.Clear();
 		tangentsOut.Clear();
+
 
 		for (int z = 0; z < steps.z; z++)
 		{

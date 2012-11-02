@@ -13,31 +13,44 @@ public class CubeTest : MonoBehaviour
 
 	public float movement;
 	public float iso = 0.2f;
+	[HideInInspector] [SerializeField] private int lastHash;
 
 	private void OnEnable()
 	{
 		if (renderer.sharedMaterial == null)
 			renderer.sharedMaterial = new Material(Shader.Find("Custom/TriPlanar"));
 
-		if (cubes == null)
-		{
-			cubes = ScriptableObject.CreateInstance<MarchingCubes>();
-		}
+		//if (cubes == null)
+		//{
+		//Debug.Log("nullcubes!");
+		//cubes = ScriptableObject.CreateInstance<MarchingCubes>();
+		//}
 
 		movement = 0;
 
-		ReDraw();
+		lastHash = 0;
+		//ReDraw();
 	}
 
 	private void Update()
 	{
+		if (cubes == null)
+			return;
+
+		if (cubes.Hash != lastHash)
+		{
+			lastHash = cubes.Hash;
+			ReDraw();
+			return;
+		}
+
 		if (Application.isPlaying)
 		{
 			movement += Time.deltaTime;
 			if (cubes.metaBalls.metaPoints.Count > 0)
-				cubes.metaBalls.MoveBall(0, new Vector3(Mathf.Cos(movement), Mathf.Sin(movement), Mathf.Cos(movement * 2)) * 0.1f);
+				cubes.metaBalls.MoveBall(0, new Vector3(Mathf.Cos(movement), Mathf.Sin(movement), Mathf.Cos(movement*2))*0.1f);
 			if (cubes.metaBalls.metaPoints.Count > 1)
-				cubes.metaBalls.MoveBall(1, new Vector3(Mathf.Sin(movement), Mathf.Cos(movement), Mathf.Sin(movement * 2)) * 0.1f);
+				cubes.metaBalls.MoveBall(1, new Vector3(Mathf.Sin(movement), Mathf.Cos(movement), Mathf.Sin(movement*2))*0.1f);
 
 			ReDraw();
 		}
@@ -54,6 +67,9 @@ public class CubeTest : MonoBehaviour
 
 	private void Mesher()
 	{
+		if (cubes == null)
+			return;
+
 		//while (meshThread!=null)
 		{
 			//if(taskQueued&&!taskDone)
@@ -62,7 +78,7 @@ public class CubeTest : MonoBehaviour
 				List<Vector3> normals = new List<Vector3>();
 				List<Vector4> tangents = new List<Vector4>();
 				List<Vector2> uvs = new List<Vector2>();
-				cubes.ComputeMetaBalls();
+				//cubes.ComputeMetaBalls();
 				cubes.Draw(vertices, normals, uvs, tangents);
 
 
@@ -91,13 +107,13 @@ public class CubeTest : MonoBehaviour
 						DestroyImmediate(nextChild.GetComponent<MeshFilter>().sharedMesh);
 
 					nextChild.GetComponent<MeshFilter>().sharedMesh = new Mesh
-					                                                  {
-					                                                  	vertices = vertices.GetRange(curIndex, count).ToArray(),
-					                                                  	triangles = indices,
-					                                                  	normals = normals.GetRange(curIndex, count).ToArray(),
-					                                                  	tangents = tangents.GetRange(curIndex, count).ToArray(),
-					                                                  	uv = uvs.GetRange(curIndex, count).ToArray()
-					                                                  };
+						                                                  {
+							                                                  vertices = vertices.GetRange(curIndex, count).ToArray(),
+							                                                  triangles = indices,
+							                                                  normals = normals.GetRange(curIndex, count).ToArray(),
+							                                                  tangents = tangents.GetRange(curIndex, count).ToArray(),
+							                                                  uv = uvs.GetRange(curIndex, count).ToArray()
+						                                                  };
 
 					//nextChild.GetComponent<MeshRenderer>().sharedMaterial = renderer.sharedMaterial;
 					//nextChild.transform.parent = transform;
@@ -115,7 +131,7 @@ public class CubeTest : MonoBehaviour
 
 	//private Thread meshThread;
 
-	public void ReDraw()
+	private void ReDraw()
 	{
 		Mesher();
 		//if(meshThread==null)

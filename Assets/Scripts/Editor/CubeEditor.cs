@@ -19,7 +19,7 @@ public class CubeEditor : Editor
 	private void OnEnable()
 	{
 		EditorUtility.SetSelectedWireframeHidden(CubeTest.renderer, !showWire);
-		ToolsSupport.Hidden = true;
+		ToolsSupport.Hidden = CubeTest.cubes!=null;
 	}
 
 	private void OnDisable()
@@ -30,12 +30,14 @@ public class CubeEditor : Editor
 
 	public void OnSceneGUI()
 	{
+		if(CubeTest.cubes==null)
+			return;
 		if (Event.current.type == EventType.ValidateCommand)
 		{
 			if (Event.current.commandName == "UndoRedoPerformed")
 			{
-				CubeTest.ReDraw();
-				EditorUtility.SetDirty(CubeTest);
+				CubeTest.cubes.ComputeMetaBalls();
+				EditorUtility.SetDirty(CubeTest.cubes);
 			}
 		}
 
@@ -63,10 +65,10 @@ public class CubeEditor : Editor
 
 						if ((point.pos - newPos).magnitude > 0.0001f)
 						{
-							Undo.RegisterUndo(CubeTest, "Move Metaball");
+							Undo.RegisterUndo(CubeTest.cubes, "Move Metaball");
 							point.pos = newPos;
-							CubeTest.ReDraw();
-							EditorUtility.SetDirty(CubeTest);
+							CubeTest.cubes.ComputeMetaBalls();
+							EditorUtility.SetDirty(CubeTest.cubes);
 						}
 					}
 					break;
@@ -84,10 +86,10 @@ public class CubeEditor : Editor
 						power = Handles.ScaleSlider(power, pos, Vector3.forward, Quaternion.identity, size, 1.0f);
 						if (Mathf.Abs(point.power - power) > 0.0001f)
 						{
-							Undo.RegisterUndo(CubeTest, "Scale Metaball");
+							Undo.RegisterUndo(CubeTest.cubes, "Scale Metaball");
 							point.power = power;
-							CubeTest.ReDraw();
-							EditorUtility.SetDirty(CubeTest);
+							CubeTest.cubes.ComputeMetaBalls();
+							EditorUtility.SetDirty(CubeTest.cubes);
 						}
 					}
 					break;
@@ -102,11 +104,11 @@ public class CubeEditor : Editor
 				                   HandleUtility.GetHandleSize(pos) / 8,
 				                   Handles.SphereCap))
 				{
-					Undo.RegisterUndo(CubeTest, "Delete Metaball");
+					Undo.RegisterUndo(CubeTest.cubes, "Delete Metaball");
 					CubeTest.cubes.metaBalls.metaPoints.RemoveAt(i);
 					i--;
-					CubeTest.ReDraw();
-					EditorUtility.SetDirty(CubeTest);
+					CubeTest.cubes.ComputeMetaBalls();
+					EditorUtility.SetDirty(CubeTest.cubes);
 				}
 			}
 		}
@@ -150,12 +152,14 @@ public class CubeEditor : Editor
 	public override void OnInspectorGUI()
 	{
 		DrawDefaultInspector();
+		if (CubeTest.cubes == null)
+			return;
 		if (GUILayout.Button("New Metaball"))
 		{
-			Undo.RegisterUndo(CubeTest, "Add Metaball");
-			CubeTest.cubes.metaBalls.metaPoints.Add(new MetaPoint {pos = Vector3.zero, power = 1.0f});
-			CubeTest.ReDraw();
-			EditorUtility.SetDirty(CubeTest);
+			Undo.RegisterUndo(CubeTest.cubes, "Add Metaball");
+			CubeTest.cubes.metaBalls.metaPoints.Add(new MetaPoint { pos = Vector3.zero, power = 1.0f });
+			CubeTest.cubes.ComputeMetaBalls();
+			EditorUtility.SetDirty(CubeTest.cubes);
 		}
 
 		EditorGUI.BeginChangeCheck();
@@ -163,42 +167,42 @@ public class CubeEditor : Editor
 		if (EditorGUI.EndChangeCheck())
 		{
 			EditorUtility.SetSelectedWireframeHidden(CubeTest.renderer, !showWire);
-			EditorUtility.SetDirty(CubeTest);
+			EditorUtility.SetDirty(CubeTest.cubes);
 		}
 		bool newCap = EditorGUILayout.Toggle("Cap", CubeTest.cubes.capped);
 		if (newCap != CubeTest.cubes.capped)
 		{
 			Undo.RegisterUndo(CubeTest.cubes, "Toggle Capping");
 			CubeTest.cubes.capped = newCap;
-			CubeTest.ReDraw();
-			EditorUtility.SetDirty(CubeTest);
+			CubeTest.cubes.ComputeMetaBalls();
+			EditorUtility.SetDirty(CubeTest.cubes);
 		}
 
 		IntVector3 steps = EditorGUILayout.Vector3Field("Cube Steps", CubeTest.cubes.Steps);
 		if (!steps.Same(CubeTest.cubes.Steps))
 		{
-			Undo.RegisterUndo(CubeTest, "Change Step Size");
+			Undo.RegisterUndo(CubeTest.cubes, "Change Step Size");
 			CubeTest.cubes.Steps = steps;
-			CubeTest.ReDraw();
-			EditorUtility.SetDirty(CubeTest);
+			CubeTest.cubes.ComputeMetaBalls();
+			EditorUtility.SetDirty(CubeTest.cubes);
 		}
 
 		Vector3 min = EditorGUILayout.Vector3Field("Cube Min", CubeTest.cubes.Min);
 		if ((min - CubeTest.cubes.Min).sqrMagnitude > Mathf.Epsilon)
 		{
-			Undo.RegisterUndo(CubeTest, "Change Cube Dimensions");
+			Undo.RegisterUndo(CubeTest.cubes, "Change Cube Dimensions");
 			CubeTest.cubes.Min = min;
-			CubeTest.ReDraw();
-			EditorUtility.SetDirty(CubeTest);
+			CubeTest.cubes.ComputeMetaBalls();
+			EditorUtility.SetDirty(CubeTest.cubes);
 		}
 
 		Vector3 max = EditorGUILayout.Vector3Field("Cube Max", CubeTest.cubes.Max);
 		if ((max - CubeTest.cubes.Max).sqrMagnitude > Mathf.Epsilon)
 		{
-			Undo.RegisterUndo(CubeTest, "Change Cube Dimensions");
+			Undo.RegisterUndo(CubeTest.cubes, "Change Cube Dimensions");
 			CubeTest.cubes.Max = max;
-			CubeTest.ReDraw();
-			EditorUtility.SetDirty(CubeTest);
+			CubeTest.cubes.ComputeMetaBalls();
+			EditorUtility.SetDirty(CubeTest.cubes);
 		}
 	}
 

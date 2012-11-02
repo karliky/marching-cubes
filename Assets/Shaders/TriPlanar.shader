@@ -32,7 +32,6 @@ Shader "Custom/TriPlanar" {
 			half3 norm;
 		};
 		
-#define NORMALIZED
 		void vert (inout appdata_full v, out Input o) {
 			o.xyv.xy = TRANSFORM_TEX(v.vertex.zy, _XTexture);
 			o.xyv.zw = TRANSFORM_TEX(v.vertex.zx, _YTexture);
@@ -41,13 +40,10 @@ Shader "Custom/TriPlanar" {
 			o.xyb.zw = TRANSFORM_TEX(v.vertex.zx, _YBumpMap);
 			o.zvb.zw = TRANSFORM_TEX(v.vertex.xy, _ZBumpMap);
 			
-#ifdef NORMALIZED
-			o.norm = normalize(abs(v.normal));
-#else
-			half  f = abs(v.normal.x) + abs(v.normal.y) + abs(v.normal.z);
-			o.norm = (abs(v.normal))/f;
-#endif
-			
+			o.norm = (abs(v.normal));
+			o.norm = (o.norm - 0.2) * 7;  
+			o.norm = max(o.norm, 0);
+			o.norm /= (o.norm.x + o.norm.y + o.norm.z ).xxx;   
 		}
 		
 		void surf (Input IN, inout SurfaceOutput o) {
@@ -55,28 +51,16 @@ Shader "Custom/TriPlanar" {
 			half3 norm = IN.norm;
 			 
 			half4 output = 
-#ifdef NORMALIZED
-			tex2D(_XTexture, IN.xyv.xy)*norm.x*norm.x+
-			tex2D(_YTexture, IN.xyv.zw)*norm.y*norm.y+
-			tex2D(_ZTexture, IN.zvb.xy)*norm.z*norm.z;
-#else
-			tex2D(_XTexture, IN.xyv.xy)*norm.x+
-			tex2D(_YTexture, IN.xyv.zw)*norm.y+
-			tex2D(_ZTexture, IN.zvb.xy)*norm.z;
-#endif
+			tex2D(_XTexture, IN.xyv.xy)*norm.xxxx+
+			tex2D(_YTexture, IN.xyv.zw)*norm.yyyy+
+			tex2D(_ZTexture, IN.zvb.xy)*norm.zzzz;
 			
 			o.Albedo = output.rgb;
 			o.Alpha = output.a;
 			o.Normal = 
-#ifdef NORMALIZED
-					UnpackNormal(tex2D(_XBumpMap, IN.xyb.xy))*norm.x*norm.x+
-					UnpackNormal(tex2D(_YBumpMap, IN.xyb.zw))*norm.y*norm.y+
-					UnpackNormal(tex2D(_ZBumpMap, IN.zvb.zw))*norm.z*norm.z;
-#else
-					UnpackNormal(tex2D(_XBumpMap, IN.xyb.xy))*norm.x+
-					UnpackNormal(tex2D(_YBumpMap, IN.xyb.zw))*norm.y+
-					UnpackNormal(tex2D(_ZBumpMap, IN.zvb.zw))*norm.z;
-#endif
+					UnpackNormal(tex2D(_XBumpMap, IN.xyb.xy))*norm.xxx+
+					UnpackNormal(tex2D(_YBumpMap, IN.xyb.zw))*norm.yyy+
+					UnpackNormal(tex2D(_ZBumpMap, IN.zvb.zw))*norm.zzz;
 		}
 		ENDCG
 	} 
