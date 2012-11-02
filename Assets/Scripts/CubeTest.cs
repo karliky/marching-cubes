@@ -21,7 +21,6 @@ public class CubeTest : MonoBehaviour
 
 		if (cubes == null)
 		{
-			Debug.Log("nullcubes!");
 			cubes = ScriptableObject.CreateInstance<MarchingCubes>();
 		}
 
