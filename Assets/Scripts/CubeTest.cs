@@ -13,7 +13,7 @@ public class CubeTest : MonoBehaviour
 
 	public float movement;
 	public float iso = 0.2f;
-	[HideInInspector] [SerializeField] private int lastHash;
+	[HideInInspector] [SerializeField] private float lastHash;
 
 	private void OnEnable()
 	{
@@ -37,9 +37,10 @@ public class CubeTest : MonoBehaviour
 		if (cubes == null)
 			return;
 
-		if (cubes.Hash != lastHash)
+		if (Math.Abs(cubes.Hash - lastHash) > Mathf.Epsilon)
 		{
 			lastHash = cubes.Hash;
+			cubes.ComputeMetaBalls();
 			ReDraw();
 			return;
 		}

@@ -36,7 +36,7 @@ public class CubeEditor : Editor
 		{
 			if (Event.current.commandName == "UndoRedoPerformed")
 			{
-				CubeTest.cubes.ComputeMetaBalls();
+				//CubeTest.cubes.ComputeMetaBalls();
 				EditorUtility.SetDirty(CubeTest.cubes);
 			}
 		}
@@ -67,7 +67,7 @@ public class CubeEditor : Editor
 						{
 							Undo.RegisterUndo(CubeTest.cubes, "Move Metaball");
 							point.pos = newPos;
-							CubeTest.cubes.ComputeMetaBalls();
+							//CubeTest.cubes.ComputeMetaBalls();
 							EditorUtility.SetDirty(CubeTest.cubes);
 						}
 					}
@@ -88,7 +88,7 @@ public class CubeEditor : Editor
 						{
 							Undo.RegisterUndo(CubeTest.cubes, "Scale Metaball");
 							point.power = power;
-							CubeTest.cubes.ComputeMetaBalls();
+							//CubeTest.cubes.ComputeMetaBalls();
 							EditorUtility.SetDirty(CubeTest.cubes);
 						}
 					}
@@ -107,7 +107,7 @@ public class CubeEditor : Editor
 					Undo.RegisterUndo(CubeTest.cubes, "Delete Metaball");
 					CubeTest.cubes.metaBalls.metaPoints.RemoveAt(i);
 					i--;
-					CubeTest.cubes.ComputeMetaBalls();
+					//CubeTest.cubes.ComputeMetaBalls();
 					EditorUtility.SetDirty(CubeTest.cubes);
 				}
 			}
@@ -158,7 +158,7 @@ public class CubeEditor : Editor
 		{
 			Undo.RegisterUndo(CubeTest.cubes, "Add Metaball");
 			CubeTest.cubes.metaBalls.metaPoints.Add(new MetaPoint { pos = Vector3.zero, power = 1.0f });
-			CubeTest.cubes.ComputeMetaBalls();
+			//CubeTest.cubes.ComputeMetaBalls();
 			EditorUtility.SetDirty(CubeTest.cubes);
 		}
 
@@ -174,7 +174,7 @@ public class CubeEditor : Editor
 		{
 			Undo.RegisterUndo(CubeTest.cubes, "Toggle Capping");
 			CubeTest.cubes.capped = newCap;
-			CubeTest.cubes.ComputeMetaBalls();
+			//CubeTest.cubes.ComputeMetaBalls();
 			EditorUtility.SetDirty(CubeTest.cubes);
 		}
 
@@ -183,7 +183,7 @@ public class CubeEditor : Editor
 		{
 			Undo.RegisterUndo(CubeTest.cubes, "Change Step Size");
 			CubeTest.cubes.Steps = steps;
-			CubeTest.cubes.ComputeMetaBalls();
+			//CubeTest.cubes.ComputeMetaBalls();
 			EditorUtility.SetDirty(CubeTest.cubes);
 		}
 
@@ -192,7 +192,7 @@ public class CubeEditor : Editor
 		{
 			Undo.RegisterUndo(CubeTest.cubes, "Change Cube Dimensions");
 			CubeTest.cubes.Min = min;
-			CubeTest.cubes.ComputeMetaBalls();
+			//CubeTest.cubes.ComputeMetaBalls();
 			EditorUtility.SetDirty(CubeTest.cubes);
 		}
 
@@ -201,7 +201,7 @@ public class CubeEditor : Editor
 		{
 			Undo.RegisterUndo(CubeTest.cubes, "Change Cube Dimensions");
 			CubeTest.cubes.Max = max;
-			CubeTest.cubes.ComputeMetaBalls();
+			//CubeTest.cubes.ComputeMetaBalls();
 			EditorUtility.SetDirty(CubeTest.cubes);
 		}
 	}

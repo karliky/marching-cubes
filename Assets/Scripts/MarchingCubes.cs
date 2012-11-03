@@ -43,6 +43,7 @@ public class MarchingCubes : BaseMarchingCubes
 	}
 
 
+
 	private void OnEnable()
 	{
 		if (vertices == null)
@@ -162,64 +163,18 @@ public class MarchingCubes : BaseMarchingCubes
 				}
 			}
 		}
-
-		Hash = UnityEngine.Random.Range(1, int.MaxValue);
 	}
 
-
-}
-
-[Serializable]
-public class Vertex
-{
-	public Vector3 pos;
-	public float flux;
-	public bool inside;
-	public Vector3 normal;
-	public Vector2 uv;
-	public Vector4 tangent;
-}
-
-[Serializable]
-public class IntVector3
-{
-	[SerializeField]
-	public int x, y, z;
-
-	public IntVector3(int x, int y, int z)
+	protected override float GetHash()
 	{
-		this.x = x;
-		this.y = y;
-		this.z = z;
-	}
-
-	public static implicit operator IntVector3(Vector3 v)
-	{
-		return new IntVector3((int) v.x, (int) v.y, (int) v.z);
-	}
-
-	public static implicit operator Vector3(IntVector3 v)
-	{
-		return new Vector3(v.x, v.y, v.z);
-	}
-
-	public static IntVector3 operator -(IntVector3 a, IntVector3 b)
-	{
-		return new IntVector3(a.x - b.x, a.y - b.y, a.z - b.z);
-	}
-
-	public float SqrMagnitude
-	{
-		get { return x * x + y * y + z * z; }
-	}
-
-	public float Magnitude
-	{
-		get { return Mathf.Sqrt(SqrMagnitude); }
-	}
-
-	public bool Same(IntVector3 other)
-	{
-		return (this - other).SqrMagnitude <= Mathf.Epsilon;
+		float hash = base.GetHash();
+		hash += capped?67:0;
+		hash += metaBalls.metaPoints.Count * 139;
+		foreach (MetaPoint point in metaBalls.metaPoints)
+		{
+			hash += point.pos.x * 29 + point.pos.y * 31 + point.pos.z * 37;
+			hash += point.power * 41;
+		}
+		return hash;
 	}
 }

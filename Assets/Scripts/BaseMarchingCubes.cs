@@ -304,14 +304,23 @@ public abstract class BaseMarchingCubes : MonoBehaviour
 	#endregion
 
 	[SerializeField]
-	private int hash;
+	private float hash;
 
-
-	public int Hash
+	public float Hash
 	{
-		get { return hash; }
+		get { return GetHash(); }
 		protected set { hash = value; }
 	}
+
+	protected virtual float GetHash()
+	{
+		float h = hash;
+		h += min.x * 2 + min.y * 3 + min.z * 5;
+		h += max.x * 7 + max.y * 11 + max.z * 13;
+		h += steps.x * 17 + steps.y * 19 + steps.z * 23;
+		return h;
+	}
+
 	[SerializeField] protected Vertex[] vertices;
 
 
