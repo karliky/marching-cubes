@@ -327,6 +327,7 @@ public abstract class BaseMarchingCubes : MonoBehaviour
 	public float iso = 0.2f;
 
 	[SerializeField]
+	[HideInInspector]
 	private Vector3
 		min = new Vector3(-10, -10, -10),
 		max = new Vector3(10, 10, 10);
@@ -365,6 +366,7 @@ public abstract class BaseMarchingCubes : MonoBehaviour
 		}
 	}
 
+	[SerializeField]
 	public Vector3 Max
 	{
 		get { return max; }
